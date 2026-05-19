@@ -11,5 +11,16 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  nodeapp:
+    build: .
+    container_name: node_mongodb
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URL: mongodb://admin:admin123@mongo:27017/mvcdb?authSource=admin
+    depends_on:
+      - mongo
+
 volumes:
   mongo_data:
