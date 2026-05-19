@@ -1,359 +1,131 @@
-Parfait, puisque **Docker est déjà installé**, on va faire le TP **étape par étape**, exactement dans l’ordre, avec les commandes à taper.
+Voici un guide étape par étape pour réaliser ce TP sur l'installation et la manipulation de MongoDB, ainsi que la création d'une API avec Node.js :
 
-Je vais te guider depuis **le lancement du cluster Hadoop/HBase** jusqu’aux manipulations HBase.
+### **Étape 1 : Installation et Démarrage de MongoDB via Docker**
 
----
+* 
+**Vérification de Docker** : Assurez-vous que Docker est installé en tapant `docker-compose --version` dans votre terminal.
 
-# **Étape 1 : Télécharger les fichiers du TP**
 
-Tu dois récupérer le dossier `hadoop-main` depuis le dépôt GitLab.
+* 
+**Préparation de l'environnement** : Créez un dossier `/home/user/Documents/MongoDB` et téléchargez-y les fichiers `docker-compose.yml` et `movieDetails.bson` depuis Moodle.
 
-Dans ton terminal :
 
-```bash
-git clone https://gitlab.com/dounia.zaidouni/hadoop.git
-```
+* 
+**Lancement des services** : Placez-vous dans ce répertoire (`cd /home/user/Documents/MongoDB/`) et lancez le conteneur avec `docker-compose up -d`.
 
-Ensuite :
 
-```bash
-cd hadoop
-```
+* 
+**Accès au conteneur** : Entrez dans le terminal du conteneur avec `docker exec -it mongodb bash`, puis connectez-vous au shell MongoDB avec `mongosh -u admin -p admin123 --authenticationDatabase admin`.
 
-Puis vérifie les fichiers :
 
-```bash
-ls
-```
 
-Tu dois voir :
+### **Étape 2 : Restauration des Données et Requêtage**
 
-```bash
-docker-compose-multiNodesHBASE.yml
-lib_to_add
-...
-```
+* 
+**Importation du fichier BSON** : Copiez le fichier de données dans votre conteneur avec `docker cp movieDetails.bson mongodb:/movieDetails.bson`.
 
----
 
-# **Étape 2 : Lancer les conteneurs Hadoop + HBase**
+* 
+**Restauration** : Utilisez la commande `mongorestore` pour importer les données dans la base de données `cinema` et la collection `films`.
 
-Toujours dans le dossier :
 
-```bash
-docker-compose -f docker-compose-multiNodesHBASE.yml up -d
-```
+* 
+**Tests de requêtes** : Connectez-vous à `mongosh`, sélectionnez la base avec `use cinema;` et testez des requêtes comme `db.films.count()` ou `db.films.findOne()`.
 
-Cette commande va lancer :
 
-* `namenode`
-* `datanode1`
-* `datanode2`
-* `hbase-master`
-* `hbase-region`
-* `zoo`
+* 
+**Gestion des index** : Exercez-vous à visualiser (`getIndexes()`), créer (`createIndex()`) et supprimer (`dropIndex()`) des index pour optimiser la recherche.
 
----
 
-# **Étape 3 : Vérifier que les conteneurs tournent**
+* 
+**Recherches avancées** : Utilisez des filtres spécifiques comme `$in`, `$gt`, `$ne` et gérez l'affichage des champs avec la projection JSON. Triez les résultats avec la fonction `sort()`.
 
-Tape :
 
-```bash
-docker ps
-```
+* 
+**Opérations CRUD basiques** : Pratiquez l'insertion (`insertOne`, `insertMany`), la suppression (`deleteOne`, `drop`) et la mise à jour (`updateOne`, `$set`, `$inc`, `$push`) sur une base de test.
 
-Tu dois voir plusieurs conteneurs actifs.
 
-Exemple :
 
-```bash
-namenode
-datanode1
-datanode2
-hbase-master
-hbase-region
-zoo
-```
+### **Étape 3 : Création de l'Application Node.js & MongoDB (Architecture MVC)**
 
----
+* 
+**Architecture du projet** : Créez un répertoire `node-mongo-mvc/` et mettez en place l'architecture requise avec les dossiers `models`, `controllers`, `routes`, `services` et `config`.
 
-# **Étape 4 : Vérifier les interfaces Web**
 
-Dans le navigateur :
+* **Configuration Docker et Node** :
+* Remplissez le fichier `package.json` pour définir les dépendances comme Express et Mongoose.
 
-### Hadoop NameNode :
 
-```bash
-http://localhost:9870
-```
+* Éditez le fichier `docker-compose.yml` pour orchestrer les conteneurs MongoDB et Node.js simultanément.
 
-### HBase Master :
 
-```bash
-http://localhost:16010
-```
+* Configurez le `Dockerfile` pour créer l'image de votre application Node.js.
 
-### HBase Region :
 
-```bash
-http://localhost:16030
-```
 
-Si les pages s’ouvrent, le cluster fonctionne.
 
----
+* **Développement de l'API** :
+* 
+**Base de données** : Configurez la connexion Mongoose dans `config/db.js`.
 
-# **Étape 5 : Entrer dans le conteneur HBase Master**
 
-Tape :
+* 
+**Modèle** : Définissez le schéma des produits (nom et prix) dans `models/product.model.js`.
 
-```bash
-docker exec -it hbase-master /bin/bash
-```
 
-Tu seras dans :
+* 
+**Service** : Centralisez les méthodes de manipulation des produits (`create`, `findAll`, etc.) dans `services/product.service.js`.
 
-```bash
-root@hbase-master:/#
-```
 
----
+* 
+**Contrôleur** : Gérez les requêtes HTTP et les réponses dans `controllers/product.controller.js`.
 
-# **Étape 6 : Lancer le shell HBase**
 
-Dans le conteneur :
+* 
+**Routes** : Associez les méthodes HTTP aux fonctions du contrôleur dans `routes/product.route.js`.
 
-```bash
-cd /opt/hbase-2.5.10/
-hbase shell
-```
 
-Puis :
+* 
+**Initialisation** : Liez l'ensemble des éléments et démarrez le serveur sur le port 3000 dans `app.js`.
 
-```bash
-status
-```
 
-Tu dois voir :
 
-```bash
-1 active master
-1 servers
-```
 
----
+* 
+**Déploiement** : Arrêtez les anciens conteneurs (`docker-compose down`) puis construisez et lancez la nouvelle application avec `docker-compose up --build`.
 
-# **Étape 7 : Créer la table `registre_ventes`**
 
-Dans `hbase shell` :
 
-```bash
-create 'registre_ventes','client','ventes'
-```
+### **Étape 4 : Tests des Services REST avec Postman**
 
-Puis :
+* 
+**Installation** : Installez le client Postman avec `sudo snap install postman`.
 
-```bash
-list
-```
 
-Tu dois voir :
+* **Test du CRUD** : Dans Postman, créez une collection et importez les commandes cURL fournies dans le document pour tester chaque point d'accès de votre API :
+* 
+**CREATE** : Testez la création de produits ("Laptop", "Phone") avec des requêtes POST sur `/api/products`.
 
-```bash
-registre_ventes
-```
 
----
+* 
+**READ** : Récupérez la liste de tous les produits (GET sur `/api/products`) ou un produit ciblé via son ID.
 
-# **Étape 8 : Insérer les données**
 
-Copie les commandes suivantes :
+* 
+**UPDATE** : Modifiez un produit existant (par exemple en "Laptop Pro") en utilisant une requête PUT et son ID.
 
-```bash
-put 'registre_ventes', '101', 'client:nom', 'Mohamed A'
-put 'registre_ventes', '101', 'client:ville', 'Casablanca'
-put 'registre_ventes', '101', 'ventes:produit', 'Chaises'
-put 'registre_ventes', '101', 'ventes:montant', '2000 MAD'
 
-put 'registre_ventes', '102', 'client:nom', 'Amine B'
-put 'registre_ventes', '102', 'client:ville', 'Sale'
-put 'registre_ventes', '102', 'ventes:produit', 'Lampes'
-put 'registre_ventes', '102', 'ventes:montant', '300 MAD'
-```
+* 
+**DELETE** : Supprimez un produit avec une requête DELETE pointant sur son ID.
 
----
 
-# **Étape 9 : Vérifier l’insertion**
 
-```bash
-scan 'registre_ventes'
-```
 
-Tu verras les lignes insérées.
+* 
+**Vérification technique** : Connectez-vous au terminal `mongosh` de votre nouveau conteneur, sélectionnez `use mvcdb;`, et utilisez `db.products.find()` pour valider visuellement que les données ont bien été modifiées en base.
 
----
 
-# **Étape 10 : Lire une valeur précise**
 
-Exemple : produit du client 102
+### **Étape 5 : Rédaction du Rapport**
 
-```bash
-get 'registre_ventes','102',{COLUMN => 'ventes:produit'}
-```
-
----
-
-# **Étape 11 : Décrire la table**
-
-```bash
-describe 'registre_ventes'
-```
-
-Tu verras :
-
-* familles de colonnes
-* nombre de versions
-* configuration
-
----
-
-# **Étape 12 : Modifier une famille de colonnes**
-
-Changer `VERSIONS` :
-
-```bash
-alter 'registre_ventes', { NAME => 'client', VERSIONS => 3 }
-```
-
-Vérifie :
-
-```bash
-describe 'registre_ventes'
-```
-
----
-
-# **Étape 13 : Supprimer la table**
-
-```bash
-disable 'registre_ventes'
-drop 'registre_ventes'
-```
-
-Puis vérifier :
-
-```bash
-exists 'registre_ventes'
-```
-
----
-
-# **Étape 14 : Sortir du shell HBase**
-
-```bash
-exit
-```
-
----
-
-# **Étape 15 : Préparer le code Java**
-
-Toujours dans le conteneur :
-
-```bash
-cd /
-mkdir hbase-code
-cd hbase-code
-```
-
-Créer le fichier :
-
-```bash
-vim HelloHBase.java
-```
-
-Puis colle le code Java donné dans le TP.
-
----
-
-# **Étape 16 : Configurer CLASSPATH**
-
-```bash
-cd ~
-vim .bashrc
-```
-
-Ajouter :
-
-```bash
-export CLASSPATH=/opt/hbase-2.5.10/lib/*
-```
-
-Puis :
-
-```bash
-source .bashrc
-```
-
----
-
-# **Étape 17 : Copier les bibliothèques nécessaires**
-
-Sur la machine hôte (pas dans le conteneur) :
-
-```bash
-for file in ./lib_to_add/*; do
-docker cp "$file" hbase-master:/opt/hbase-2.5.10/lib/
-done
-```
-
----
-
-# **Étape 18 : Compiler le code Java**
-
-Dans le conteneur :
-
-```bash
-cd /hbase-code
-javac HelloHBase.java
-```
-
----
-
-# **Étape 19 : Exécuter le programme**
-
-```bash
-java -cp .:/opt/hbase-2.5.10/lib/* HelloHBase
-```
-
-Si tout va bien :
-
-```bash
-Adding user: user1
-Adding user: user2
-reading data...
-mohamed
-```
-
----
-
-# **Étape 20 : Vérifier dans HBase shell**
-
-Relance :
-
-```bash
-hbase shell
-```
-
-Puis :
-
-```bash
-scan 'user'
-```
-
-Tu verras les données insérées par Java.
-
----
-
-Si tu veux, **la prochaine étape**, je peux t’aider à faire la **partie 3 du TP : chargement du fichier `purchases2.txt` dans HBase**, parce que c’est la partie la plus compliquée (HDFS + ImportTsv).
+* En binôme, rassemblez toutes vos manipulations, explications et captures d'écran (terminaux et Postman) dans un rapport final détaillé.
